@@ -1,0 +1,42 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isRoomMember(roomId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/rooms/$(roomId)/users/$(request.auth.uid));
+    }
+    
+    function isRoomOwner(roomId) {
+      return request.auth.uid == get(/databases/$(database)/documents/rooms/$(roomId)).data.ownerId;
+    }
+
+    match /rooms/{roomId} {
+      allow get: if isRoomMember(roomId);
+      allow list: if isSignedIn(); // Allow querying rooms to find one by code
+      allow create: if isSignedIn();
+      allow update: if isRoomOwner(roomId) || isRoomMember(roomId); // Members can update game state
+      allow delete: if isRoomOwner(roomId);
+      
+      match /users/{userId} {
+        allow read, write: if request.auth.uid == userId;
+        allow list: if isRoomMember(roomId);
+      }
+
+      match /messages/{messageId} {
+        allow list: if isRoomMember(roomId);
+        allow create: if isRoomMember(roomId) 
+                      && request.resource.data.userId == request.auth.uid;
+      }
+    }
+    
+    match /players/{playerId} {
+      allow read: if true;
+      allow write: if false; // Managed by admin
+    }
+  }
+}
