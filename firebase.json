@@ -1,0 +1,9 @@
+{
+  "hosting": [
+    {
+      "target": "app-hosting",
+      "source": ".",
+      "config": "apphosting.yaml"
+    }
+  ]
+}

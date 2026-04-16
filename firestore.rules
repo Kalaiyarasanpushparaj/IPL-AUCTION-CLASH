@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rooms
+    match /rooms/{roomId} {
+      allow read, write: if isSignedIn();
+      match /users/{userId} {
+        allow read, write: if isSignedIn();
+      }
+      match /messages/{messageId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+  }
+
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isRoomMember(roomId) {
+    // Placeholder - implement if needed
+  }
